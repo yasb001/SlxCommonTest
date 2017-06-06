@@ -58,6 +58,27 @@ void MainWidget::onAboutTriggered(bool btriggered)
 void MainWidget::onPlanningTriggered(bool bChecked)
 {
     qDebug() << __FILE__;
+    QMenu *testMenu = new QMenu();
+    QAction *act1 = new QAction("act1", this);
+    QAction *act2 = new QAction("act2", this);
+    testMenu->addAction(act1);
+    testMenu->addAction(act2);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    testMenu->exec(mapToGlobal(QPoint(10, 10)));
+//    m_PlanningAction->setMenu(testMenu);
+
+}
+
+void MainWidget::onShowRecentPlanningTriggered(bool bTriggered)
+{
+    qDebug() << __LINE__;
+    QMenu *testMenu = new QMenu(this);
+    QAction *act1 = new QAction("act1", this);
+    QAction *act2 = new QAction("act2", this);
+    testMenu->addAction(act1);
+    testMenu->addAction(act2);
+
+    testMenu->exec(QPoint(10, 10));
 }
 
 void MainWidget::setWidgetSizeAndPos()
@@ -149,7 +170,8 @@ void MainWidget::createSystemTrayIconContexMenu()
     // 添加计划
     m_PlanningAction = new QAction(QString::fromLocal8Bit("添加计划任务"), this);
     connect(m_PlanningAction, SIGNAL(triggered(bool)), this, SLOT(onPlanningTriggered(bool)));
-
+    // 显示最近计划
+    m_ShowRecentPlan = new QMenu(QString::fromLocal8Bit("显示待完成任务"), this);
     m_TrayMenu = new QMenu(this);
     m_TrayMenu->addAction(m_AboutAction);
     m_TrayMenu->addSeparator();
@@ -158,6 +180,7 @@ void MainWidget::createSystemTrayIconContexMenu()
     m_TrayMenu->addAction(m_ShowMainWindow);
     m_TrayMenu->addSeparator();
     m_TrayMenu->addAction(m_PlanningAction);
+    m_TrayMenu->addMenu(m_ShowRecentPlan);
 
     m_TrayIcon->setContextMenu(m_TrayMenu);
 }

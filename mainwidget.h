@@ -25,6 +25,7 @@ public slots:
     void updateTime();
     void onAboutTriggered(bool btriggered);
     void onPlanningTriggered(bool bChecked);
+    void onShowRecentPlanningTriggered(bool bTriggered);
 
 private:
     void setWidgetSizeAndPos();
