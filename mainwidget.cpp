@@ -26,7 +26,7 @@ MainWidget::MainWidget(QWidget *parent) :
     createSystemTrayIcon();
 
     // 启动计时器更新时间
-    startTimer(1000);
+    m_TimerID = startTimer(1000);
 
 
 }
@@ -35,12 +35,29 @@ MainWidget::MainWidget(QWidget *parent) :
 
 MainWidget::~MainWidget()
 {
+    killTimer(m_TimerID);
+    m_TimerID = -1;
     delete ui;
 }
 
 void MainWidget::updateTime()
 {
 
+}
+
+void MainWidget::onAboutTriggered(bool btriggered)
+{
+    if(QSystemTrayIcon::supportsMessages()){
+        qDebug() << "Support";
+        m_TrayIcon->showMessage("Title", "msg");
+    }else{
+        qDebug() << "Not Support";
+    }
+}
+
+void MainWidget::onPlanningTriggered(bool bChecked)
+{
+    qDebug() << __FILE__;
 }
 
 void MainWidget::setWidgetSizeAndPos()
@@ -70,7 +87,7 @@ void MainWidget::timerEvent(QTimerEvent *event)
     QString time = QTime::currentTime().toString();
     if(m_Rect.contains(QCursor::pos()))
     {
-        m_TrayIcon->showMessage("shedule", "sleep", QSystemTrayIcon::Information, 5000);
+        m_TrayIcon->showMessage("Planning", "sleep", QSystemTrayIcon::Information, 5000);
         hide();
     }
     else
@@ -82,48 +99,32 @@ void MainWidget::timerEvent(QTimerEvent *event)
 
 }
 
-void MainWidget::mouseMoveEvent(QMouseEvent *event)
-{
-//    qDebug() << event->globalPos();
-//    QPoint globalPos = event->globalPos();
-//    if(m_Rect.contains(globalPos))
-//    {
-//        qDebug() << "mouse in rect";
-//        setWindowOpacity(0.1);
-//        this->hide();
-//    }
-//    else
-//    {
-//        qDebug() << "mouse out rect";
-//        setWindowOpacity(0.7);
-//        this->show();
-//    }
-
-}
 
 void MainWidget::createSystemTrayIcon()
 {
     m_TrayIcon = new QSystemTrayIcon(this);
     m_TrayIcon->setIcon(QIcon(":/images/system_icon.jpg"));
-    m_TrayIcon->setVisible(true);
-
-
-
+    m_TrayIcon->setVisible(true);// == m_TrayIcon->show();
+    // 创建菜单
     createSystemTrayIconContexMenu();
-
-    m_TrayIcon->show();
 }
 
 void MainWidget::createSystemTrayIconContexMenu()
 {
     m_AboutAction = new QAction("about", this);
-    m_TimeShowSettingMenu = new QMenu("Time Setting",this);
+    connect(m_AboutAction, SIGNAL(triggered(bool)), this, SLOT(onAboutTriggered(bool)));
 
-    m_HourAction = new QAction("One Hour");
-    m_HalfHourAction = new QAction("Half Hour");
-    m_FifteenMinutesAction = new QAction("Fifteen Minutes");
-    m_TenMinutesAction = new QAction("Ten Minutes");
-    m_OneMinutesAction = new QAction("One Minitues");
+    m_TimeShowSettingMenu = new QMenu("Time Setting",this);
+    m_HourAction = new QAction("One Hour", this);
+    m_HourAction->setCheckable(true);
+    m_HalfHourAction = new QAction("Half Hour", this);
+    m_HalfHourAction->setCheckable(true);
+    m_FifteenMinutesAction = new QAction("Fifteen Minutes", this);
+    m_FifteenMinutesAction->setCheckable(true);
+    m_TenMinutesAction = new QAction("Ten Minutes", this);
+    m_TenMinutesAction->setCheckable(true);
+    m_OneMinutesAction = new QAction("One Minitues", this);
+    m_OneMinutesAction->setCheckable(true);
 
     QActionGroup *actionGroup = new QActionGroup(this);
     actionGroup->addAction(m_HourAction);
@@ -139,11 +140,25 @@ void MainWidget::createSystemTrayIconContexMenu()
     m_TimeShowSettingMenu->addAction(m_TenMinutesAction);
     m_TimeShowSettingMenu->addAction(m_OneMinutesAction);
 
+    // 显示主窗口
+    m_ShowMainWindow = new QAction(QString::fromLocal8Bit("显示时间窗口(&W)"), this);
+    m_ShowMainWindow->setCheckable(true);
+    m_ShowMainWindow->setShortcut(Qt::ALT + Qt::Key_W);
+    connect(m_ShowMainWindow, SIGNAL(triggered(bool)), this, SLOT(setVisible(bool)));
+
+    // 添加计划
+    m_PlanningAction = new QAction(QString::fromLocal8Bit("添加计划任务"), this);
+    connect(m_PlanningAction, SIGNAL(triggered(bool)), this, SLOT(onPlanningTriggered(bool)));
 
     m_TrayMenu = new QMenu(this);
     m_TrayMenu->addAction(m_AboutAction);
     m_TrayMenu->addSeparator();
     m_TrayMenu->addMenu(m_TimeShowSettingMenu);
+    m_TrayMenu->addSeparator();
+    m_TrayMenu->addAction(m_ShowMainWindow);
+    m_TrayMenu->addSeparator();
+    m_TrayMenu->addAction(m_PlanningAction);
+
     m_TrayIcon->setContextMenu(m_TrayMenu);
 }
 
